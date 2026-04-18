@@ -1,74 +1,74 @@
 const xlsx = require('xlsx');
-const Income = require("../models/Income");
+const Expense = require("../models/Expense");
 
-// Add income source
-exports.addIncome = async(req, res) => {
+// Add expense source
+exports.addExpense = async(req, res) => {
     const userId = req.user.id;
 
     try{
-        const { icon, source, amount, date} = req.body;
+        const { icon, category, amount, date} = req.body;
 
         // validation: check for missing fields
-        if(!source || !amount || !date){
+        if(!category || !amount || !date){
             return res.status(400).json({ message: "All fields are required"});
         }
 
-        const newIncome = new Income ({
+        const newExpense = new Expense ({
             userId,
             icon,
-            source,
+            category,
             amount,
             date: new Date(date)
         });
 
-        await newIncome.save();
+        await newExpense.save();
         res.status(200).json(newIncome);
     } catch(error) {
         res.status(500).json({ message: "Server Error"});
     }
 }
 
-// get all Income source
-exports.getAllIncome = async(req, res) => {
+// get all Expense source
+exports.getAllExpense = async(req, res) => {
     const userId = req.user.id;
 
     try{
-        const income = await Income.find({ userId }).sort({ date: -1});
-        res.json(income);
+        const expense = await Expense.find({ userId }).sort({ date: -1});
+        res.json(expense);
     } catch(error) {
         res.status(500).json({ message: "Server Error"})
     }
 };
 
-// delete income source
-exports.deleteIncome = async(req, res) => {
+// delete Expense source
+exports.deleteExpense = async(req, res) => {
     try {
-        await Income.findByIdAndDelete(req.params.id);
-        res.json({ message: "Income deleted successfully!"});
+        await Expense.findByIdAndDelete(req.params.id);
+        res.json({ message: "Expense deleted successfully!"});
     } catch (error) {
         res.status(500).json({ message: "Server Error"});
     }
 };
 
 // download income source
-exports.downloadIncomeExcel = async(req, res) => {
+exports.downloadExpenseExcel = async(req, res) => {
     const userId = req.user.id;
 
     try {
-        const income = await Income.find({ userId }).sort({ date: -1 });
+        const expense = await Expense.find({ userId }).sort({ date: -1 });
 
         // prepare data for excel
-        const data = income.map((item) => ({
-            Source: item.source,
+        const data = expense.map((item) => ({
+            Category: item.category,
             Amount: item.amount,
             Date: item.date,
         }));
 
         const wb = xlsx.utils.book_new();
         const ws = xlsx.utils.json_to_sheet(data);
-        xlsx.utils.book_append_sheet(wb, ws, "Income");
-        xlsx.writeFile(wb, 'income_details.xlsx');
-        res.download('income_details.xlsx');
+        xlsx.utils.book_append_sheet(wb, ws, "Expense");
+        xlsx.writeFile(wb, 'expense_details.xlsx');
+        res.download('expense_details.xlsx');
     } catch (error) {
         res.status(500).json({ message: "Server Error"});
     }
